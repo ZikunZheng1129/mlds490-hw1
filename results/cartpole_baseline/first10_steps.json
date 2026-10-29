@@ -1,0 +1,192 @@
+[
+  {
+    "step": 0,
+    "state_norm": 0.06511303037405014,
+    "state": [
+      0.002678942633792758,
+      0.04019985347986221,
+      -0.04763391613960266,
+      0.018641654402017593
+    ],
+    "changed_pixels": null,
+    "p_action_0": 0.7102545499801636,
+    "action": 0,
+    "reward": 1.0,
+    "terminated": false,
+    "truncated": false,
+    "return_to_go": 19.999998092651367,
+    "gamma_to_t": 1.0,
+    "baseline_candidate": 18.39358397779979
+  },
+  {
+    "step": 1,
+    "state_norm": 0.3370405435562134,
+    "state": [
+      0.0034829399082809687,
+      -0.1542077511548996,
+      -0.047261081635951996,
+      0.29592323303222656
+    ],
+    "changed_pixels": null,
+    "p_action_0": 0.0012191985733807087,
+    "action": 1,
+    "reward": 1.0,
+    "terminated": false,
+    "truncated": false,
+    "return_to_go": 19.999996185302734,
+    "gamma_to_t": 0.95,
+    "baseline_candidate": 18.39358397779979
+  },
+  {
+    "step": 2,
+    "state_norm": 0.05969491973519325,
+    "state": [
+      0.0003987847303505987,
+      0.041554976254701614,
+      -0.04134261608123779,
+      -0.011282575316727161
+    ],
+    "changed_pixels": null,
+    "p_action_0": 0.8279128670692444,
+    "action": 0,
+    "reward": 1.0,
+    "terminated": false,
+    "truncated": false,
+    "return_to_go": 19.999996185302734,
+    "gamma_to_t": 0.9025,
+    "baseline_candidate": 18.39358397779979
+  },
+  {
+    "step": 3,
+    "state_norm": 0.3114280700683594,
+    "state": [
+      0.0012298842193558812,
+      -0.1529504358768463,
+      -0.041568268090486526,
+      0.26807495951652527
+    ],
+    "changed_pixels": null,
+    "p_action_0": 0.002158341696485877,
+    "action": 1,
+    "reward": 1.0,
+    "terminated": false,
+    "truncated": false,
+    "return_to_go": 19.999996185302734,
+    "gamma_to_t": 0.8573749999999999,
+    "baseline_candidate": 18.39358397779979
+  },
+  {
+    "step": 4,
+    "state_norm": 0.06739035248756409,
+    "state": [
+      -0.0018291244050487876,
+      0.04273934289813042,
+      -0.036206770688295364,
+      -0.03742368146777153
+    ],
+    "changed_pixels": null,
+    "p_action_0": 0.8974329233169556,
+    "action": 0,
+    "reward": 1.0,
+    "terminated": false,
+    "truncated": false,
+    "return_to_go": 19.999996185302734,
+    "gamma_to_t": 0.8145062499999999,
+    "baseline_candidate": 18.39358397779979
+  },
+  {
+    "step": 5,
+    "state_norm": 0.2894373834133148,
+    "state": [
+      -0.0009743375703692436,
+      -0.15184520184993744,
+      -0.03695524483919144,
+      0.24361936748027802
+    ],
+    "changed_pixels": null,
+    "p_action_0": 0.0036237596068531275,
+    "action": 1,
+    "reward": 1.0,
+    "terminated": false,
+    "truncated": false,
+    "return_to_go": 19.999996185302734,
+    "gamma_to_t": 0.7737809374999998,
+    "baseline_candidate": 18.39358397779979
+  },
+  {
+    "step": 6,
+    "state_norm": 0.08137078583240509,
+    "state": [
+      -0.004011241719126701,
+      0.04378458485007286,
+      -0.03208285570144653,
+      -0.06048731878399849
+    ],
+    "changed_pixels": null,
+    "p_action_0": 0.9374012351036072,
+    "action": 0,
+    "reward": 1.0,
+    "terminated": false,
+    "truncated": false,
+    "return_to_go": 19.999996185302734,
+    "gamma_to_t": 0.7350918906249998,
+    "baseline_candidate": 18.39358397779979
+  },
+  {
+    "step": 7,
+    "state_norm": 0.27040499448776245,
+    "state": [
+      -0.0031355498358607292,
+      -0.15086302161216736,
+      -0.03329260274767876,
+      0.22190310060977936
+    ],
+    "changed_pixels": null,
+    "p_action_0": 0.005832009948790073,
+    "action": 1,
+    "reward": 1.0,
+    "terminated": false,
+    "truncated": false,
+    "return_to_go": 19.999996185302734,
+    "gamma_to_t": 0.6983372960937497,
+    "baseline_candidate": 18.39358397779979
+  },
+  {
+    "step": 8,
+    "state_norm": 0.09719187766313553,
+    "state": [
+      -0.006152810528874397,
+      0.044718582183122635,
+      -0.02885453961789608,
+      -0.0810929536819458
+    ],
+    "changed_pixels": null,
+    "p_action_0": 0.9607172012329102,
+    "action": 0,
+    "reward": 1.0,
+    "terminated": false,
+    "truncated": false,
+    "return_to_go": 19.999996185302734,
+    "gamma_to_t": 0.6634204312890623,
+    "baseline_candidate": 18.39358397779979
+  },
+  {
+    "step": 9,
+    "state_norm": 0.25376129150390625,
+    "state": [
+      -0.005258438643068075,
+      -0.14997811615467072,
+      -0.030476398766040802,
+      0.20234845578670502
+    ],
+    "changed_pixels": null,
+    "p_action_0": 0.009089567698538303,
+    "action": 1,
+    "reward": 1.0,
+    "terminated": false,
+    "truncated": false,
+    "return_to_go": 19.999996185302734,
+    "gamma_to_t": 0.6302494097246091,
+    "baseline_candidate": 18.39358397779979
+  }
+]

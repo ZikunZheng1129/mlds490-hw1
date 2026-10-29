@@ -1,0 +1,105 @@
+{
+  "parameters": {
+    "capacity": 15,
+    "max_queue": 200,
+    "dispatch_cost": 100.0,
+    "holding_cost": 2.0,
+    "gamma": 0.95,
+    "arrivals": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  },
+  "value_convention": "discounted cost J; reward value V = -J",
+  "terminal_cost": 0,
+  "overflow": "blocked at cap, no extra penalty",
+  "value_iteration": {
+    "iterations": 519,
+    "residual": 9.413270163349807e-11
+  },
+  "policy_iteration": {
+    "iterations": 6,
+    "residual": 9.094947017729282e-13
+  },
+  "dispatch_threshold": 13,
+  "policy_mismatches_vi_pi": 0,
+  "policy_mismatches_finite_t0_pi": 0,
+  "last_period_dispatch_states": 0,
+  "max_abs_difference_vi_pi": 1.8662831280380487e-09,
+  "max_abs_difference_finite500_pi": 4.9417394620832056e-09,
+  "vi_residual_error_bound": 1.88265403266996e-09,
+  "finite500_tail_bound": 6.838022067752704e-08,
+  "selected_values": {
+    "0": 576.6701677662195,
+    "1": 587.444123516466,
+    "12": 672.8921633807238,
+    "13": 676.6701677662194,
+    "15": 676.6701677662193,
+    "200": 3821.5864771838897
+  },
+  "horizon_convergence": [
+    {
+      "horizon": 1,
+      "max_abs_error_vs_infinite": 3421.5864771838897
+    },
+    {
+      "horizon": 10,
+      "max_abs_error_vs_infinite": 917.0184339017883
+    },
+    {
+      "horizon": 50,
+      "max_abs_error_vs_infinite": 52.24911846785517
+    },
+    {
+      "horizon": 100,
+      "max_abs_error_vs_infinite": 4.020300229277382
+    },
+    {
+      "horizon": 200,
+      "max_abs_error_vs_infinite": 0.02380230498192759
+    },
+    {
+      "horizon": 500,
+      "max_abs_error_vs_infinite": 4.9417394620832056e-09
+    }
+  ],
+  "controlled_experiments": {
+    "gamma_zero": {
+      "dispatch_states": 0,
+      "max_error_vs_2n": 0.0
+    },
+    "free_dispatch": {
+      "dispatch_states": 200,
+      "nonempty_states": 200,
+      "J0": 0.0
+    },
+    "free_holding": {
+      "dispatch_states": 0,
+      "max_abs_value": 0.0
+    },
+    "no_arrivals": {
+      "dispatch_threshold": 3,
+      "max_error_vs_min_40n_100": 1.8934116496893694e-09
+    },
+    "exhaustive_4_step_2_actions_9_states_max_error": 3.552713678800501e-15
+  },
+  "boundary": {
+    "wait_at_200_next_states": [
+      200,
+      200,
+      200,
+      200,
+      200
+    ],
+    "dispatch_at_200_next_states": [
+      186,
+      187,
+      188,
+      189,
+      190
+    ]
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "config": {
+    "task": "pong",
+    "baseline": false,
+    "episodes": 1000,
+    "eval_episodes": 500,
+    "seed": 7,
+    "eval_seed": 20000,
+    "hidden": 32,
+    "learning_rate": 0.001,
+    "output": "results/pong_plain_1000",
+    "validate": false,
+    "gamma": 0.99,
+    "environment": "ALE/Pong-v5",
+    "baseline_decay": 0.9,
+    "final_baseline": -1.903067275828513,
+    "objective": "E[sum_t gamma**t r_t]",
+    "return_standardization": false,
+    "pong_frame_difference": true,
+    "pong_actions": [
+      2,
+      3
+    ],
+    "pong_frameskip": 4,
+    "pong_sticky_action_probability": 0.25
+  },
+  "training": {
+    "episodes": 1000,
+    "mean": -20.498,
+    "std_population": 0.7416171519052132,
+    "min": -21.0,
+    "max": -16.0,
+    "mean_length": 1003.85,
+    "terminated": 1000,
+    "truncated": 0,
+    "first100_mean": -20.51,
+    "last100_mean": -20.43,
+    "seconds": 256.3333607079694
+  },
+  "evaluation": {
+    "episodes": 500,
+    "mean": -20.38,
+    "std_population": 0.8292164976651151,
+    "min": -21.0,
+    "max": -17.0,
+    "mean_length": 1050.292,
+    "terminated": 500,
+    "truncated": 0,
+    "parameters_unchanged": true
+  },
+  "gradient_variance": {
+    "episodes": 20,
+    "constant_baseline": -1.903067275828513,
+    "plain": {
+      "mean_squared_norm": 612.5643835885832,
+      "variance_trace": 555.7289374370637,
+      "squared_mean_norm": 56.83544615151947
+    },
+    "baseline": {
+      "mean_squared_norm": 49.22752886868516,
+      "variance_trace": 46.89829927413603,
+      "squared_mean_norm": 2.3292295945491386
+    },
+    "variance_ratio_baseline_over_plain": 0.08439060145117468
+  },
+  "total_seconds": 406.7066750419908
+}

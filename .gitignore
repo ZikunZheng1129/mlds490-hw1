@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.coverage
+coverage.json
+work/
+*.zip
+.DS_Store
+mlds_assignment1.pdf
+tmp/

@@ -1,0 +1,8 @@
+numpy==2.5.4
+matplotlib==3.11.2
+torch==2.14.1
+gymnasium[classic-control,atari]==1.4.0
+ale-py==0.12.1
+pytest==9.1.1
+pytest-cov==7.1.0
+reportlab==5.1.0

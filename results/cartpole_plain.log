@@ -1,0 +1,38 @@
+cartpole baseline=False train 25/800 recent=48.96 elapsed=0.1s
+cartpole baseline=False train 50/800 recent=61.66 elapsed=0.2s
+cartpole baseline=False train 75/800 recent=59.35 elapsed=0.2s
+cartpole baseline=False train 100/800 recent=55.64 elapsed=0.2s
+cartpole baseline=False train 125/800 recent=46.69 elapsed=0.2s
+cartpole baseline=False train 150/800 recent=31.66 elapsed=0.2s
+cartpole baseline=False train 175/800 recent=28.27 elapsed=0.3s
+cartpole baseline=False train 200/800 recent=33.79 elapsed=0.3s
+cartpole baseline=False train 225/800 recent=47.72 elapsed=0.3s
+cartpole baseline=False train 250/800 recent=71.79 elapsed=0.4s
+cartpole baseline=False train 275/800 recent=85.44 elapsed=0.4s
+cartpole baseline=False train 300/800 recent=84.39 elapsed=0.4s
+cartpole baseline=False train 325/800 recent=87.40 elapsed=0.5s
+cartpole baseline=False train 350/800 recent=81.91 elapsed=0.5s
+cartpole baseline=False train 375/800 recent=78.52 elapsed=0.5s
+cartpole baseline=False train 400/800 recent=79.49 elapsed=0.6s
+cartpole baseline=False train 425/800 recent=69.20 elapsed=0.6s
+cartpole baseline=False train 450/800 recent=52.67 elapsed=0.6s
+cartpole baseline=False train 475/800 recent=41.55 elapsed=0.6s
+cartpole baseline=False train 500/800 recent=38.67 elapsed=0.7s
+cartpole baseline=False train 525/800 recent=51.99 elapsed=0.7s
+cartpole baseline=False train 550/800 recent=70.75 elapsed=0.7s
+cartpole baseline=False train 575/800 recent=86.95 elapsed=0.8s
+cartpole baseline=False train 600/800 recent=99.96 elapsed=0.9s
+cartpole baseline=False train 625/800 recent=112.11 elapsed=0.9s
+cartpole baseline=False train 650/800 recent=122.37 elapsed=1.0s
+cartpole baseline=False train 675/800 recent=128.50 elapsed=1.1s
+cartpole baseline=False train 700/800 recent=132.91 elapsed=1.1s
+cartpole baseline=False train 725/800 recent=130.66 elapsed=1.2s
+cartpole baseline=False train 750/800 recent=118.91 elapsed=1.2s
+cartpole baseline=False train 775/800 recent=107.48 elapsed=1.2s
+cartpole baseline=False train 800/800 recent=110.65 elapsed=1.3s
+cartpole evaluate 100/500
+cartpole evaluate 200/500
+cartpole evaluate 300/500
+cartpole evaluate 400/500
+cartpole evaluate 500/500
+{"config": {"task": "cartpole", "baseline": false, "episodes": 800, "eval_episodes": 500, "seed": 7, "eval_seed": 20000, "hidden": 32, "learning_rate": 0.01, "output": "results/cartpole_plain", "validate": false, "gamma": 0.95, "environment": "CartPole-v1", "baseline_decay": 0.9, "final_baseline": 17.108144678110648, "objective": "E[sum_t gamma**t r_t]", "return_standardization": false, "pong_frame_difference": false, "pong_actions": null, "pong_frameskip": null, "pong_sticky_action_probability": null}, "training": {"episodes": 800, "mean": 79.4375, "std_population": 42.62189688118069, "min": 10.0, "max": 304.0, "mean_length": 79.4375, "terminated": 800, "truncated": 0, "first100_mean": 55.64, "last100_mean": 110.65, "seconds": 1.2958120839903131}, "evaluation": {"episodes": 500, "mean": 176.822, "std_population": 55.99023411274505, "min": 99.0, "max": 493.0, "mean_length": 176.822, "terminated": 500, "truncated": 0, "parameters_unchanged": true}, "gradient_variance": {"episodes": 20, "constant_baseline": 17.108144678110648, "plain": {"mean_squared_norm": 6200.533571964612, "variance_trace": 5976.83461352136, "squared_mean_norm": 223.6989584432515}, "baseline": {"mean_squared_norm": 127.76865809246712, "variance_trace": 123.20467961304637, "squared_mean_norm": 4.563978479420736}, "variance_ratio_baseline_over_plain": 0.020613700659262196}, "total_seconds": 2.643845833983505}

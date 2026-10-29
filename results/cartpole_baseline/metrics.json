@@ -1,0 +1,64 @@
+{
+  "config": {
+    "task": "cartpole",
+    "baseline": true,
+    "episodes": 800,
+    "eval_episodes": 500,
+    "seed": 7,
+    "eval_seed": 20000,
+    "hidden": 32,
+    "learning_rate": 0.01,
+    "output": "results/cartpole_baseline",
+    "validate": false,
+    "gamma": 0.95,
+    "environment": "CartPole-v1",
+    "baseline_decay": 0.9,
+    "final_baseline": 18.39358397779979,
+    "objective": "E[sum_t gamma**t r_t]",
+    "return_standardization": false,
+    "pong_frame_difference": false,
+    "pong_actions": null,
+    "pong_frameskip": null,
+    "pong_sticky_action_probability": null
+  },
+  "training": {
+    "episodes": 800,
+    "mean": 182.9225,
+    "std_population": 112.87013109653945,
+    "min": 18.0,
+    "max": 500.0,
+    "mean_length": 182.9225,
+    "terminated": 761,
+    "truncated": 39,
+    "first100_mean": 75.27,
+    "last100_mean": 154.75,
+    "seconds": 2.593924707995029
+  },
+  "evaluation": {
+    "episodes": 500,
+    "mean": 294.39,
+    "std_population": 72.45595834712284,
+    "min": 153.0,
+    "max": 500.0,
+    "mean_length": 294.39,
+    "terminated": 493,
+    "truncated": 7,
+    "parameters_unchanged": true
+  },
+  "gradient_variance": {
+    "episodes": 20,
+    "constant_baseline": 18.39358397779979,
+    "plain": {
+      "mean_squared_norm": 7982.245443842509,
+      "variance_trace": 7823.2496936580765,
+      "squared_mean_norm": 158.99575018443264
+    },
+    "baseline": {
+      "mean_squared_norm": 51.44109689136208,
+      "variance_trace": 50.40837694735249,
+      "squared_mean_norm": 1.032719944009588
+    },
+    "variance_ratio_baseline_over_plain": 0.006443406374746811
+  },
+  "total_seconds": 4.768476708006347
+}

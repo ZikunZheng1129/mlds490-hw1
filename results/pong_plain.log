@@ -1,0 +1,18 @@
+A.L.E: Arcade Learning Environment (version 0.12.1+8a8fafb)
+[Powered by Stella]
+pong baseline=False train 25/250 recent=-20.52 elapsed=6.6s
+pong baseline=False train 50/250 recent=-20.40 elapsed=12.8s
+pong baseline=False train 75/250 recent=-20.51 elapsed=19.2s
+pong baseline=False train 100/250 recent=-20.51 elapsed=25.6s
+pong baseline=False train 125/250 recent=-20.53 elapsed=31.7s
+pong baseline=False train 150/250 recent=-20.62 elapsed=38.0s
+pong baseline=False train 175/250 recent=-20.56 elapsed=44.4s
+pong baseline=False train 200/250 recent=-20.55 elapsed=50.5s
+pong baseline=False train 225/250 recent=-20.49 elapsed=56.9s
+pong baseline=False train 250/250 recent=-20.42 elapsed=63.2s
+pong evaluate 100/500
+pong evaluate 200/500
+pong evaluate 300/500
+pong evaluate 400/500
+pong evaluate 500/500
+{"config": {"task": "pong", "baseline": false, "episodes": 250, "eval_episodes": 500, "seed": 7, "eval_seed": 20000, "hidden": 32, "learning_rate": 0.001, "output": "results/pong_plain", "validate": false, "gamma": 0.99, "environment": "ALE/Pong-v5", "baseline_decay": 0.9, "final_baseline": -1.925779800286526, "objective": "E[sum_t gamma**t r_t]", "return_standardization": false, "pong_frame_difference": true, "pong_actions": [2, 3], "pong_frameskip": 4, "pong_sticky_action_probability": 0.25}, "training": {"episodes": 250, "mean": -20.496, "std_population": 0.7056798140800119, "min": -21.0, "max": -18.0, "mean_length": 1009.748, "terminated": 250, "truncated": 0, "first100_mean": -20.51, "last100_mean": -20.42, "seconds": 63.249821792007424}, "evaluation": {"episodes": 500, "mean": -20.5, "std_population": 0.714142842854285, "min": -21.0, "max": -16.0, "mean_length": 1007.19, "terminated": 500, "truncated": 0, "parameters_unchanged": true}, "gradient_variance": {"episodes": 20, "constant_baseline": -1.925779800286526, "plain": {"mean_squared_norm": 567.3112304237611, "variance_trace": 532.5504862050284, "squared_mean_norm": 34.7607442187326}, "baseline": {"mean_squared_norm": 48.34238471036411, "variance_trace": 46.17732718286366, "squared_mean_norm": 2.1650575275004433}, "variance_ratio_baseline_over_plain": 0.08670976438670586}, "total_seconds": 185.8203922919929}
