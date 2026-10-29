@@ -9,7 +9,7 @@ Zikun Zheng
 | File | Contents |
 |---|---|
 | `shuttle.py` | Q2: shuttle MDP, finite-horizon solution, value iteration and policy iteration |
-| `policy_gradient.py` | Policy Gradient Parts 1 and 2: CartPole and Pong, with and without an EMA baseline |
+| `policy_gradient.py` | Policy Gradient Parts 1 and 2: CartPole and Pong, with EMA and learned value baselines |
 | `results/` | Training records, evaluation scores, plots and saved models |
 | `tests/` | Tests for the shuttle and policy gradient implementations |
 | `build_report.py` | Generates the PDF from the saved results |
@@ -42,7 +42,14 @@ python policy_gradient.py --task pong --baseline --episodes 250 --learning-rate 
 
 Each run uses seed 7 and evaluates the trained policy for 500 episodes. For Pong,
 I first tried 250 training episodes, then repeated the plain policy gradient run
-with 1000 total episodes. The Pong baseline comparison uses 250 episodes for both methods.
+with 1000 total episodes. The original Pong baseline comparison uses 250 episodes for both methods.
+
+I also tried a 200-unit hidden layer on Pong, with and without a learned value baseline:
+
+```bash
+python policy_gradient.py --task pong --hidden 200 --episodes 1000 --learning-rate 0.001 --output results/pong_hidden200_plain_1000
+python policy_gradient.py --task pong --hidden 200 --value-baseline --episodes 1000 --learning-rate 0.001 --value-learning-rate 0.001 --output results/pong_hidden200_value_1000
+```
 
 ## Validation and report
 

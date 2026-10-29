@@ -1,0 +1,48 @@
+A.L.E: Arcade Learning Environment (version 0.12.1+8a8fafb)
+[Powered by Stella]
+pong baseline=False train 25/1000 recent=-20.60 elapsed=6.6s
+pong baseline=False train 50/1000 recent=-20.60 elapsed=12.9s
+pong baseline=False train 75/1000 recent=-20.61 elapsed=19.3s
+pong baseline=False train 100/1000 recent=-20.51 elapsed=26.0s
+pong baseline=False train 125/1000 recent=-20.52 elapsed=32.6s
+pong baseline=False train 150/1000 recent=-20.52 elapsed=39.3s
+pong baseline=False train 175/1000 recent=-20.55 elapsed=45.5s
+pong baseline=False train 200/1000 recent=-20.69 elapsed=52.2s
+pong baseline=False train 225/1000 recent=-20.66 elapsed=58.8s
+pong baseline=False train 250/1000 recent=-20.64 elapsed=65.2s
+pong baseline=False train 275/1000 recent=-20.63 elapsed=71.8s
+pong baseline=False train 300/1000 recent=-20.57 elapsed=78.4s
+pong baseline=False train 325/1000 recent=-20.56 elapsed=84.8s
+pong baseline=False train 350/1000 recent=-20.47 elapsed=91.4s
+pong baseline=False train 375/1000 recent=-20.26 elapsed=98.8s
+pong baseline=False train 400/1000 recent=-20.31 elapsed=106.0s
+pong baseline=False train 425/1000 recent=-20.24 elapsed=114.2s
+pong baseline=False train 450/1000 recent=-20.27 elapsed=124.0s
+pong baseline=False train 475/1000 recent=-20.30 elapsed=133.6s
+pong baseline=False train 500/1000 recent=-20.26 elapsed=146.3s
+pong baseline=False train 525/1000 recent=-20.35 elapsed=160.7s
+pong baseline=False train 550/1000 recent=-20.36 elapsed=172.5s
+pong baseline=False train 575/1000 recent=-20.47 elapsed=183.6s
+pong baseline=False train 600/1000 recent=-20.46 elapsed=191.2s
+pong baseline=False train 625/1000 recent=-20.45 elapsed=203.9s
+pong baseline=False train 650/1000 recent=-20.55 elapsed=211.9s
+pong baseline=False train 675/1000 recent=-20.55 elapsed=219.4s
+pong baseline=False train 700/1000 recent=-20.61 elapsed=226.4s
+pong baseline=False train 725/1000 recent=-20.64 elapsed=233.1s
+pong baseline=False train 750/1000 recent=-20.61 elapsed=240.4s
+pong baseline=False train 775/1000 recent=-20.71 elapsed=248.5s
+pong baseline=False train 800/1000 recent=-20.75 elapsed=254.9s
+pong baseline=False train 825/1000 recent=-20.81 elapsed=261.2s
+pong baseline=False train 850/1000 recent=-20.83 elapsed=269.7s
+pong baseline=False train 875/1000 recent=-20.87 elapsed=282.3s
+pong baseline=False train 900/1000 recent=-20.78 elapsed=292.8s
+pong baseline=False train 925/1000 recent=-20.69 elapsed=303.7s
+pong baseline=False train 950/1000 recent=-20.69 elapsed=320.7s
+pong baseline=False train 975/1000 recent=-20.64 elapsed=330.8s
+pong baseline=False train 1000/1000 recent=-20.63 elapsed=339.6s
+pong evaluate 100/500
+pong evaluate 200/500
+pong evaluate 300/500
+pong evaluate 400/500
+pong evaluate 500/500
+{"config": {"task": "pong", "baseline": false, "episodes": 1000, "eval_episodes": 500, "seed": 7, "eval_seed": 20000, "hidden": 200, "learning_rate": 0.001, "output": "results/pong_hidden200_plain_1000", "validate": false, "gamma": 0.99, "environment": "ALE/Pong-v5", "baseline_decay": 0.9, "final_baseline": -2.1680121568106596, "objective": "E[sum_t gamma**t r_t]", "return_standardization": false, "pong_frame_difference": true, "pong_actions": [2, 3], "pong_frameskip": 4, "pong_sticky_action_probability": 0.25}, "training": {"episodes": 1000, "mean": -20.557, "std_population": 0.7132678318836481, "min": -21.0, "max": -17.0, "mean_length": 986.006, "terminated": 1000, "truncated": 0, "first100_mean": -20.51, "last100_mean": -20.63, "seconds": 339.6293118750327}, "evaluation": {"episodes": 500, "mean": -20.768, "std_population": 0.5081102242624134, "min": -21.0, "max": -18.0, "mean_length": 924.476, "terminated": 500, "truncated": 0, "parameters_unchanged": true}, "gradient_variance": {"episodes": 20, "constant_baseline": -2.1680121568106596, "plain": {"mean_squared_norm": 801.9155705641236, "variance_trace": 781.7550630412002, "squared_mean_norm": 20.160507522923545}, "baseline": {"mean_squared_norm": 267.31604610654745, "variance_trace": 257.60896694368, "squared_mean_norm": 9.707079162867421}, "variance_ratio_baseline_over_plain": 0.32952644520334046}, "total_seconds": 540.3066721669747}

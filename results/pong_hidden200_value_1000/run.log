@@ -1,0 +1,48 @@
+A.L.E: Arcade Learning Environment (version 0.12.1+8a8fafb)
+[Powered by Stella]
+pong baseline=value train 25/1000 recent=-20.32 elapsed=11.3s
+pong baseline=value train 50/1000 recent=-20.46 elapsed=24.2s
+pong baseline=value train 75/1000 recent=-20.48 elapsed=35.1s
+pong baseline=value train 100/1000 recent=-20.49 elapsed=52.3s
+pong baseline=value train 125/1000 recent=-20.57 elapsed=63.0s
+pong baseline=value train 150/1000 recent=-20.50 elapsed=73.3s
+pong baseline=value train 175/1000 recent=-20.53 elapsed=86.0s
+pong baseline=value train 200/1000 recent=-20.56 elapsed=97.1s
+pong baseline=value train 225/1000 recent=-20.65 elapsed=105.8s
+pong baseline=value train 250/1000 recent=-20.79 elapsed=116.5s
+pong baseline=value train 275/1000 recent=-20.85 elapsed=125.3s
+pong baseline=value train 300/1000 recent=-20.92 elapsed=134.4s
+pong baseline=value train 325/1000 recent=-20.91 elapsed=143.6s
+pong baseline=value train 350/1000 recent=-20.88 elapsed=152.6s
+pong baseline=value train 375/1000 recent=-20.84 elapsed=161.8s
+pong baseline=value train 400/1000 recent=-20.76 elapsed=171.8s
+pong baseline=value train 425/1000 recent=-20.67 elapsed=183.7s
+pong baseline=value train 450/1000 recent=-20.62 elapsed=199.0s
+pong baseline=value train 475/1000 recent=-20.61 elapsed=210.6s
+pong baseline=value train 500/1000 recent=-20.69 elapsed=221.2s
+pong baseline=value train 525/1000 recent=-20.71 elapsed=232.1s
+pong baseline=value train 550/1000 recent=-20.75 elapsed=250.5s
+pong baseline=value train 575/1000 recent=-20.71 elapsed=261.6s
+pong baseline=value train 600/1000 recent=-20.63 elapsed=274.3s
+pong baseline=value train 625/1000 recent=-20.51 elapsed=283.0s
+pong baseline=value train 650/1000 recent=-20.44 elapsed=292.4s
+pong baseline=value train 675/1000 recent=-20.37 elapsed=301.8s
+pong baseline=value train 700/1000 recent=-20.24 elapsed=310.4s
+pong baseline=value train 725/1000 recent=-20.28 elapsed=319.0s
+pong baseline=value train 750/1000 recent=-20.22 elapsed=327.6s
+pong baseline=value train 775/1000 recent=-20.31 elapsed=335.3s
+pong baseline=value train 800/1000 recent=-20.44 elapsed=343.0s
+pong baseline=value train 825/1000 recent=-20.55 elapsed=350.6s
+pong baseline=value train 850/1000 recent=-20.70 elapsed=357.8s
+pong baseline=value train 875/1000 recent=-20.69 elapsed=365.0s
+pong baseline=value train 900/1000 recent=-20.73 elapsed=372.4s
+pong baseline=value train 925/1000 recent=-20.71 elapsed=380.7s
+pong baseline=value train 950/1000 recent=-20.69 elapsed=388.3s
+pong baseline=value train 975/1000 recent=-20.76 elapsed=396.0s
+pong baseline=value train 1000/1000 recent=-20.79 elapsed=404.7s
+pong evaluate 100/500
+pong evaluate 200/500
+pong evaluate 300/500
+pong evaluate 400/500
+pong evaluate 500/500
+{"config": {"task": "pong", "baseline": false, "value_baseline": true, "value_learning_rate": 0.001, "episodes": 1000, "eval_episodes": 500, "seed": 7, "eval_seed": 20000, "hidden": 200, "learning_rate": 0.001, "output": "results/pong_hidden200_value_1000", "validate": false, "gamma": 0.99, "environment": "ALE/Pong-v5", "baseline_type": "value", "baseline_decay": null, "final_baseline": null, "training_baseline_summary": "mean_of_pre_update_state_values", "objective": "E[sum_t gamma**t r_t]", "return_standardization": false, "pong_frame_difference": true, "pong_actions": [2, 3], "pong_frameskip": 4, "pong_sticky_action_probability": 0.25}, "training": {"episodes": 1000, "mean": -20.625, "std_population": 0.6770339725597232, "min": -21.0, "max": -16.0, "mean_length": 996.398, "terminated": 1000, "truncated": 0, "first100_mean": -20.49, "last100_mean": -20.79, "seconds": 404.6801843330031}, "evaluation": {"episodes": 500, "mean": -20.736, "std_population": 0.47989998958116264, "min": -21.0, "max": -19.0, "mean_length": 983.272, "terminated": 500, "truncated": 0, "parameters_unchanged": true, "value_parameters_unchanged": true}, "gradient_variance": {"episodes": 20, "baseline_type": "value", "constant_baseline": null, "plain": {"mean_squared_norm": 282.9068401477845, "variance_trace": 260.7449664880795, "squared_mean_norm": 22.161873659704998}, "baseline": {"mean_squared_norm": 83.415629141334, "variance_trace": 79.19293427490463, "squared_mean_norm": 4.222694866429363}, "variance_ratio_baseline_over_plain": 0.3037179790718035}, "total_seconds": 570.7679104169947}

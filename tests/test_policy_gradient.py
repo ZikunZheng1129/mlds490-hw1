@@ -118,3 +118,87 @@ def test_pong_full_episode_uses_only_allowed_actions():
     assert set(trajectory['rewards']) <= {-1, 0, 1}
     assert -21 <= sum(trajectory['rewards']) <= 21
     assert trajectory['terminated'] or trajectory['truncated']
+
+
+def test_value_baseline_is_detached_from_policy_gradient():
+    from policy_gradient import ValueNetwork
+
+    torch.manual_seed(10)
+    actor, critic = Actor(4, 8), ValueNetwork(4, 8)
+    states = torch.tensor([[0.1, 0.0, -0.2, 0.3], [0.0, 0.5, 0.1, -0.1]])
+    values = critic(states)
+    loss = policy_loss(actor(states).log_softmax(-1)[:, 0],
+                       torch.tensor([2.0, 1.0]), 0.95, values)
+    loss.backward()
+    assert any(parameter.grad is not None for parameter in actor.parameters())
+    assert all(parameter.grad is None for parameter in critic.parameters())
+
+
+def test_value_network_fits_monte_carlo_targets_and_preserves_rng():
+    from policy_gradient import make_value_network, fit_value_network
+
+    torch.manual_seed(20)
+    rng_before = torch.random.get_rng_state().clone()
+    critic = make_value_network(4, 8, seed=20)
+    assert torch.equal(rng_before, torch.random.get_rng_state())
+    states = torch.tensor([[1., 0., 0., 0.], [0., 1., 0., 0.],
+                           [0., 0., 1., 0.], [0., 0., 0., 1.]])
+    targets = torch.tensor([-2., -1., 1., 2.])
+    optimizer = torch.optim.Adam(critic.parameters(), lr=0.03)
+    before = float(torch.nn.functional.mse_loss(critic(states), targets).detach())
+    for _ in range(50):
+        fit_value_network(critic, optimizer, states, targets)
+    after = float(torch.nn.functional.mse_loss(critic(states), targets).detach())
+    assert after < before * 0.05
+
+
+def test_state_dependent_baseline_preserves_exact_expected_gradient():
+    """Enumerate two states and both actions, including their sampling weights."""
+    logits = torch.tensor([0.3, -0.4], requires_grad=True)
+    probabilities = logits.sigmoid()
+    action_probabilities = torch.stack((1-probabilities, probabilities), dim=1)
+    weights = (torch.tensor([0.4, 0.6])[:, None] * action_probabilities).detach().ravel()
+    log_probabilities = action_probabilities.log().ravel()
+    rewards = torch.tensor([0., 1., 2., -1.])
+    state_values = torch.tensor([0.3, 1.0]).repeat_interleave(2)
+    plain = policy_loss(weights * log_probabilities, rewards, 1.)
+    baseline = policy_loss(weights * log_probabilities, rewards, 1., state_values)
+    grad_plain = torch.autograd.grad(plain, logits, retain_graph=True)[0]
+    grad_baseline = torch.autograd.grad(baseline, logits)[0]
+    expected = -torch.tensor([0.4, -1.8]) * probabilities * (1-probabilities)
+    torch.testing.assert_close(grad_plain, expected)
+    torch.testing.assert_close(grad_baseline, expected)
+
+
+def test_value_baseline_end_to_end_checkpoint_and_frozen_diagnostics(tmp_path):
+    from argparse import Namespace
+    import csv
+    import json
+    from policy_gradient import ValueNetwork, train
+
+    args = Namespace(task='cartpole', baseline=False, value_baseline=True,
+                     value_learning_rate=0.001, episodes=4, eval_episodes=20,
+                     seed=17, eval_seed=1700, hidden=8, learning_rate=0.01,
+                     output=str(tmp_path), validate=False)
+    train(args)
+    metrics = json.loads((tmp_path/'metrics.json').read_text())
+    assert metrics['config']['baseline_type'] == 'value'
+    assert metrics['evaluation']['parameters_unchanged']
+    assert metrics['evaluation']['value_parameters_unchanged']
+    assert metrics['gradient_variance']['baseline_type'] == 'value'
+    actor = Actor(4, 8)
+    actor.load_state_dict(torch.load(tmp_path/'policy.pt', weights_only=True)['state_dict'])
+    critic = ValueNetwork(4, 8)
+    critic.load_state_dict(torch.load(tmp_path/'value.pt', weights_only=True)['state_dict'])
+    trace = json.loads((tmp_path/'first10_steps.json').read_text())
+    states = torch.tensor([row['state'] for row in trace], dtype=torch.float32)
+    np.testing.assert_allclose([row['baseline_candidate'] for row in trace],
+                               critic(states).detach().numpy(), atol=1e-7)
+    repeated = evaluate(actor, 'cartpole', 20, 1700)
+    with (tmp_path/'evaluation.csv').open() as file:
+        saved = list(csv.DictReader(file))
+    assert [float(row['reward']) for row in saved] == [row['reward'] for row in repeated]
+    with (tmp_path/'training.csv').open() as file:
+        history = list(csv.DictReader(file))
+    assert len(history) == 4
+    assert all(np.isfinite(float(row['value_loss'])) for row in history)

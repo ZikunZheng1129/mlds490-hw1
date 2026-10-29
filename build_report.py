@@ -67,7 +67,8 @@ def plain_plots():
         figure.savefig(ROOT/f'results/shuttle/{name}.png', dpi=160)
         plt.close(figure)
     for task in ('cartpole', 'pong'):
-        variants = ('plain', 'baseline', 'plain_1000') if task == 'pong' else ('plain', 'baseline')
+        variants = ('plain', 'baseline', 'plain_1000', 'hidden200_plain_1000',
+                    'hidden200_value_1000') if task == 'pong' else ('plain', 'baseline')
         for variant in variants:
             folder = ROOT/f'results/{task}_{variant}'
             train = np.genfromtxt(folder/'training.csv', delimiter=',', names=True)
@@ -174,7 +175,7 @@ def baseline_page(metrics):
           'are not enough to conclude that one method is always better.'),
         p('<b>Variance check:</b> for each final baseline-trained policy, I reuse its first '
           '20 evaluation episodes and compute gradients with b=0 and with the final EMA. '
-          'The sample covariance trace falls from '
+          'The empirical covariance trace falls from '
           f'{cp["plain"]["variance_trace"]:.2f} to {cp["baseline"]["variance_trace"]:.2f} '
           'for CartPole and from '
           f'{po["plain"]["variance_trace"]:.2f} to {po["baseline"]["variance_trace"]:.2f} '
@@ -183,6 +184,44 @@ def baseline_page(metrics):
           'the optimizer step, avoiding a baseline fitted to the current episode. '
           'It works with zero or negative rewards without dividing by a reward standard deviation. '
           'A constant baseline is unbiased, but a poor choice can increase variance.'), PageBreak()]
+
+
+def larger_pong_page(metrics):
+    names = ['pong_plain_1000', 'pong_hidden200_plain_1000', 'pong_hidden200_value_1000']
+    labels = ['32 units, no baseline', '200 units, no baseline', '200 units, value baseline']
+    rows = [['Pong / 1000 training episodes', 'Eval mean', 'Eval SD']]
+    for name, label in zip(names, labels):
+        ev = metrics[name]['evaluation']
+        rows.append([label, f'{ev["mean"]:.2f}', f'{ev["std_population"]:.2f}'])
+    old, wide, value = [metrics[name]['evaluation']['mean'] for name in names]
+    variance = metrics[names[-1]]['gradient_variance']
+    outcome = ('Neither change improves on the original 32-unit run.'
+               if max(wide, value) <= old else 'The table shows the effects in this single seed.')
+    return [p('3(b) and Part 2. Additional Pong experiments', HEAD),
+        p('I increased the hidden layer from 32 to 200 ReLU units, then added a learned '
+          'state-value baseline. Both new runs use 1000 training episodes and 500 evaluation '
+          'episodes. The seed, learning rate (0.001), discount, preprocessing and one-update-per-episode '
+          'schedule are unchanged. The outer gamma^t factor is also retained.'),
+        p('The value network has 6400 inputs, 200 ReLU units and one output. Before each '
+          'policy update, I predict V(s_t) with the current value network and detach it. '
+          'After the policy update, I fit V to the Monte Carlo returns using mean squared '
+          'error and a separate Adam optimizer with learning rate 0.001.'),
+        Preformatted('Actor loss = -sum_t gamma^t log pi(a_t|s_t) (G_t - V(s_t))\nValue loss = mean_t (V(s_t) - G_t)^2', CODE),
+        p('200 units, no baseline.', SMALL),
+        pair('results/pong_hidden200_plain_1000/training.png',
+             'results/pong_hidden200_plain_1000/evaluation.png'),
+        p('200 units, learned value baseline.', SMALL),
+        pair('results/pong_hidden200_value_1000/training.png',
+             'results/pong_hidden200_value_1000/evaluation.png'),
+        table(rows),
+        p(f'Increasing the hidden layer changes the mean from {old:.2f} to {wide:.2f}; '
+          f'adding the value baseline gives {value:.2f}. {outcome} '
+          'One seed does not establish which method is better in general.', SMALL),
+        p('On the value-trained policy, the same-trajectory gradient check (20 evaluation '
+          f'episodes) gives variance traces {variance["plain"]["variance_trace"]:.2f} without '
+          f'a baseline and {variance["baseline"]["variance_trace"]:.2f} with V(s). '
+          'Both networks remain unchanged throughout evaluation.', SMALL),
+        Preformatted('python policy_gradient.py --task pong --hidden 200 --episodes 1000 \\\n  --learning-rate 0.001 --output results/pong_hidden200_plain_1000\npython policy_gradient.py --task pong --hidden 200 --value-baseline \\\n  --episodes 1000 --learning-rate 0.001 --value-learning-rate 0.001 \\\n  --output results/pong_hidden200_value_1000', CODE), PageBreak()]
 
 
 def final_page(args):
@@ -206,7 +245,7 @@ def final_page(args):
           'also runs 500 evaluations and the 20-episode gradient check. Raw scores, metrics, '
           'first-10-step traces, models and plots are saved in results/.', SMALL),
         p('<b>With three more months:</b> I would train Pong longer, repeat both methods '
-          'over several seeds, and compare a learned value baseline with the constant EMA. '
+          'over several seeds, and compare the learned value baseline with EMA across both games. '
           'I would test learning rates and episode batch sizes, measure gradient variance '
           'with more samples, and check shuttle policies under different queue caps and '
           'arrival distributions.'),
@@ -218,12 +257,14 @@ def main():
     parser.add_argument('--github-user', default='ZikunZheng1129')
     parser.add_argument('--github-url', default='https://github.com/ZikunZheng1129/mlds490-hw1')
     args = parser.parse_args()
-    names = ['cartpole_plain', 'cartpole_baseline', 'pong_plain', 'pong_baseline', 'pong_plain_1000']
+    names = ['cartpole_plain', 'cartpole_baseline', 'pong_plain', 'pong_baseline', 'pong_plain_1000',
+             'pong_hidden200_plain_1000', 'pong_hidden200_value_1000']
     metrics = {name: load(f'results/{name}/metrics.json') for name in names}
     if any(m['evaluation']['episodes'] != 500 for m in metrics.values()):
         raise ValueError('Each experiment must contain 500 evaluation episodes.')
     plain_plots()
-    story = shuttle_page() + plain_page(metrics) + baseline_page(metrics) + final_page(args)
+    story = (shuttle_page() + plain_page(metrics) + baseline_page(metrics)
+             + larger_pong_page(metrics) + final_page(args))
     output = ROOT/'hw1_report.pdf'
     SimpleDocTemplate(str(output), pagesize=(612, 792), leftMargin=54, rightMargin=54,
                       topMargin=36, bottomMargin=36).build(story)

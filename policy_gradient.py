@@ -32,6 +32,31 @@ class Actor(nn.Module):
         return self.network(states)
 
 
+class ValueNetwork(nn.Module):
+    def __init__(self, inputs: int, hidden: int = 32):
+        super().__init__()
+        activation = nn.ReLU() if inputs == 6400 else nn.Tanh()
+        self.network = nn.Sequential(nn.Linear(inputs, hidden), activation, nn.Linear(hidden, 1))
+
+    def forward(self, states: torch.Tensor) -> torch.Tensor:
+        return self.network(states).squeeze(-1)
+
+
+def make_value_network(inputs, hidden, seed):
+    # Critic initialization must not alter the actor's random-number stream.
+    with torch.random.fork_rng(devices=[]):
+        torch.manual_seed(seed + 1)
+        return ValueNetwork(inputs, hidden)
+
+
+def fit_value_network(critic, optimizer, states, returns):
+    loss = nn.functional.mse_loss(critic(states), returns.detach())
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    return float(loss.detach())
+
+
 @dataclass(frozen=True)
 class EmaBaseline:
     value: float = 0.0
@@ -53,7 +78,9 @@ def discounted_returns(rewards, gamma: float) -> np.ndarray:
     return result
 
 
-def policy_loss(log_prob, returns, gamma: float, baseline: float = 0.0):
+def policy_loss(log_prob, returns, gamma: float, baseline: float | torch.Tensor = 0.0):
+    if isinstance(baseline, torch.Tensor):
+        baseline = baseline.detach()
     powers = gamma ** torch.arange(len(returns), dtype=returns.dtype)
     return -(log_prob * powers * (returns - baseline)).sum()
 
@@ -113,6 +140,14 @@ def log_probabilities(actor, trajectory):
     return actor(states).log_softmax(-1).gather(1, actions[:, None]).squeeze(1)
 
 
+def baseline_values(baseline, trajectory):
+    if isinstance(baseline, nn.Module):
+        states = torch.from_numpy(np.asarray(trajectory['states'], dtype=np.float32))
+        with torch.no_grad():
+            return baseline(states)
+    return baseline
+
+
 def gradient_pair(actor, trajectory, gamma, baseline):
     log_prob = log_probabilities(actor, trajectory)
     returns = torch.from_numpy(discounted_returns(trajectory['rewards'], gamma))
@@ -125,7 +160,9 @@ def gradient_pair(actor, trajectory, gamma, baseline):
 
 
 def gradient_summary(pairs, baseline):
-    result = {'episodes': len(pairs), 'constant_baseline': baseline}
+    is_value = isinstance(baseline, nn.Module)
+    result = {'episodes': len(pairs), 'baseline_type': 'value' if is_value else 'ema',
+              'constant_baseline': None if is_value else baseline}
     for index, label in enumerate(('plain', 'baseline')):
         values = np.stack([pair[index] for pair in pairs]).astype(np.float64)
         mean = values.mean(axis=0)
@@ -140,6 +177,8 @@ def evaluate(actor, task, episodes=500, seed=20000, diagnostics=None, random_pol
     env = make_env(task)
     rng = np.random.default_rng(seed)
     actor.eval()
+    if diagnostics is not None and isinstance(diagnostics['baseline'], nn.Module):
+        diagnostics['baseline'].eval()
     rows, pairs = [], []
     gamma = 0.95 if task == 'cartpole' else 0.99
     try:
@@ -152,13 +191,15 @@ def evaluate(actor, task, episodes=500, seed=20000, diagnostics=None, random_pol
                          'length': len(rewards), 'terminated': trajectory['terminated'],
                          'truncated': trajectory['truncated']})
             if save:
-                pairs.append(gradient_pair(actor, trajectory, gamma, diagnostics['baseline']))
+                baseline = baseline_values(diagnostics['baseline'], trajectory)
+                pairs.append(gradient_pair(actor, trajectory, gamma, baseline))
                 if index == 0:
                     returns = discounted_returns(rewards, gamma)
                     diagnostics['first10_steps'] = [row | {
                         'return_to_go': float(returns[row['step']]),
                         'gamma_to_t': gamma ** row['step'],
-                        'baseline_candidate': diagnostics['baseline'],
+                        'baseline_candidate': (float(baseline[row['step']])
+                                               if isinstance(baseline, torch.Tensor) else baseline),
                     } for row in trajectory['trace']]
             if (index+1) % 100 == 0:
                 print(f'{task} evaluate {index+1}/{episodes}', flush=True)
@@ -185,8 +226,9 @@ def reward_statistics(rows):
             'truncated': sum(row['truncated'] for row in rows)}
 
 
-def save_plots(output, task, use_baseline, training, evaluation):
-    title = f'{"CartPole-v1" if task == "cartpole" else "ALE/Pong-v5"}: {"EMA baseline" if use_baseline else "plain REINFORCE"}'
+def save_plots(output, task, baseline_type, training, evaluation):
+    label = {'none': 'plain REINFORCE', 'ema': 'EMA baseline', 'value': 'Value baseline'}[baseline_type]
+    title = f'{"CartPole-v1" if task == "cartpole" else "ALE/Pong-v5"}: {label}'
     rewards = np.array([row['reward'] for row in training])
     fig, ax = plt.subplots(figsize=(7, 3.6))
     ax.plot(np.arange(1, len(rewards)+1), rewards, color='#90aac4', alpha=0.6, linewidth=0.7, label='Episode reward')
@@ -211,14 +253,21 @@ def save_plots(output, task, use_baseline, training, evaluation):
 
 
 def train(args):
-    if args.episodes < 1 or args.eval_episodes < 1 or args.learning_rate <= 0:
-        raise ValueError('episode counts and learning rate must be positive')
+    use_value = getattr(args, 'value_baseline', False)
+    value_learning_rate = getattr(args, 'value_learning_rate', 0.001)
+    if args.episodes < 1 or args.eval_episodes < 1 or args.learning_rate <= 0 or args.hidden < 1:
+        raise ValueError('episode counts, hidden units and learning rate must be positive')
+    if value_learning_rate <= 0 or (args.baseline and use_value):
+        raise ValueError('use one baseline and a positive value learning rate')
+    baseline_type = 'value' if use_value else ('ema' if args.baseline else 'none')
     torch.set_num_threads(1)
     torch.manual_seed(args.seed)
     rng = np.random.default_rng(args.seed)
     gamma = 0.95 if args.task == 'cartpole' else 0.99
     actor = Actor(4 if args.task == 'cartpole' else 6400, args.hidden)
     optimizer = torch.optim.Adam(actor.parameters(), lr=args.learning_rate)
+    critic = make_value_network(4 if args.task == 'cartpole' else 6400, args.hidden, args.seed) if use_value else None
+    value_optimizer = torch.optim.Adam(critic.parameters(), lr=value_learning_rate) if use_value else None
     baseline = EmaBaseline()
     env = make_env(args.task)
     output = Path(args.output)
@@ -228,43 +277,60 @@ def train(args):
         for index in range(args.episodes):
             trajectory = episode(actor, env, args.task, args.seed+index, rng)
             returns = discounted_returns(trajectory['rewards'], gamma)
-            b = baseline.value if args.baseline else 0.0
-            loss = policy_loss(log_probabilities(actor, trajectory), torch.from_numpy(returns), gamma, b)
+            b = baseline_values(critic, trajectory) if use_value else (baseline.value if args.baseline else 0.0)
+            targets = torch.from_numpy(returns)
+            loss = policy_loss(log_probabilities(actor, trajectory), targets, gamma, b)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            value_loss = None
+            if use_value:
+                states = torch.from_numpy(np.asarray(trajectory['states'], dtype=np.float32))
+                value_loss = fit_value_network(critic, value_optimizer, states, targets)
             baseline = baseline.updated(returns)
-            rows.append({'episode': index+1, 'seed': args.seed+index,
+            row = {'episode': index+1, 'seed': args.seed+index,
                          'reward': sum(trajectory['rewards']), 'discounted_reward': float(returns[0]),
-                         'length': len(returns), 'baseline_used': b, 'loss': float(loss.detach()),
-                         'terminated': trajectory['terminated'], 'truncated': trajectory['truncated']})
+                         'length': len(returns), 'baseline_used': float(b.mean()) if use_value else b,
+                         'loss': float(loss.detach()), 'terminated': trajectory['terminated'],
+                         'truncated': trajectory['truncated']}
+            rows.append(row | {'value_loss': value_loss} if use_value else row)
             if (index+1) % 25 == 0:
                 recent = np.mean([r['reward'] for r in rows[-100:]])
-                print(f'{args.task} baseline={args.baseline} train {index+1}/{args.episodes} recent={recent:.2f} elapsed={time.perf_counter()-started:.1f}s', flush=True)
+                print(f'{args.task} baseline={baseline_type} train {index+1}/{args.episodes} recent={recent:.2f} elapsed={time.perf_counter()-started:.1f}s', flush=True)
     finally:
         env.close()
     training_seconds = time.perf_counter()-started
     config = vars(args) | {'gamma': gamma, 'environment': 'CartPole-v1' if args.task == 'cartpole' else 'ALE/Pong-v5',
-                           'baseline_decay': baseline.decay, 'final_baseline': baseline.value,
+                           'baseline_type': baseline_type, 'value_learning_rate': value_learning_rate if use_value else None,
+                           'baseline_decay': None if use_value else baseline.decay,
+                           'final_baseline': None if use_value else baseline.value,
+                           'training_baseline_summary': 'mean_of_pre_update_state_values' if use_value else 'constant',
                            'objective': 'E[sum_t gamma**t r_t]', 'return_standardization': False,
                            'pong_frame_difference': args.task == 'pong', 'pong_actions': [2, 3] if args.task == 'pong' else None,
                            'pong_frameskip': 4 if args.task == 'pong' else None,
                            'pong_sticky_action_probability': 0.25 if args.task == 'pong' else None}
     torch.save({'state_dict': actor.state_dict(), 'config': config}, output/'policy.pt')
+    if use_value:
+        torch.save({'state_dict': critic.state_dict(), 'config': config}, output/'value.pt')
     write_csv(output/'training.csv', rows)
     before = {key: value.clone() for key, value in actor.state_dict().items()}
-    diagnostics = {'baseline': baseline.value}
+    value_before = {key: value.clone() for key, value in critic.state_dict().items()} if use_value else None
+    diagnostics = {'baseline': critic if use_value else baseline.value}
     evaluation = evaluate(actor, args.task, args.eval_episodes, args.eval_seed, diagnostics)
     frozen = all(torch.equal(value, before[key]) for key, value in actor.state_dict().items())
     write_csv(output/'evaluation.csv', evaluation)
+    evaluation_stats = reward_statistics(evaluation) | {'parameters_unchanged': frozen}
+    if use_value:
+        evaluation_stats = evaluation_stats | {'value_parameters_unchanged': all(
+            torch.equal(value, value_before[key]) for key, value in critic.state_dict().items())}
     metrics = {'config': config, 'training': reward_statistics(rows) | {
         'first100_mean': float(np.mean([r['reward'] for r in rows[:100]])),
         'last100_mean': float(np.mean([r['reward'] for r in rows[-100:]])),
-        'seconds': training_seconds}, 'evaluation': reward_statistics(evaluation) | {'parameters_unchanged': frozen},
+        'seconds': training_seconds}, 'evaluation': evaluation_stats,
         'gradient_variance': diagnostics['gradient_variance'], 'total_seconds': time.perf_counter()-started}
     (output/'metrics.json').write_text(json.dumps(metrics, indent=2)+'\n')
     (output/'first10_steps.json').write_text(json.dumps(diagnostics['first10_steps'], indent=2)+'\n')
-    save_plots(output, args.task, args.baseline, rows, evaluation)
+    save_plots(output, args.task, baseline_type, rows, evaluation)
     print(json.dumps(metrics), flush=True)
 
 
@@ -298,7 +364,10 @@ def validate(output):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--task', choices=['cartpole', 'pong'], default='cartpole')
-    parser.add_argument('--baseline', action='store_true')
+    baseline_options = parser.add_mutually_exclusive_group()
+    baseline_options.add_argument('--baseline', action='store_true', help='Use the EMA baseline')
+    baseline_options.add_argument('--value-baseline', action='store_true', help='Learn a separate state-value baseline')
+    parser.add_argument('--value-learning-rate', type=float, default=0.001)
     parser.add_argument('--episodes', type=int, default=800)
     parser.add_argument('--eval-episodes', type=int, default=500)
     parser.add_argument('--seed', type=int, default=7)
