@@ -67,8 +67,7 @@ def plain_plots():
         figure.savefig(ROOT/f'results/shuttle/{name}.png', dpi=160)
         plt.close(figure)
     for task in ('cartpole', 'pong'):
-        variants = ('plain', 'baseline', 'plain_1000', 'hidden200_plain_1000',
-                    'hidden200_value_1000') if task == 'pong' else ('plain', 'baseline')
+        variants = ('selected', 'baseline') if task == 'pong' else ('plain', 'baseline')
         for variant in variants:
             folder = ROOT/f'results/{task}_{variant}'
             train = np.genfromtxt(folder/'training.csv', delimiter=',', names=True)
@@ -119,136 +118,142 @@ def game_plots(variant, metrics):
     rows = [['Environment / training episodes', 'Eval mean', 'Eval SD']]
     plots = []
     for task in ('cartpole', 'pong'):
-        key = f'{task}_{variant}'
-        shown = 'pong_plain_1000' if task == 'pong' and variant == 'plain' else key
-        stem = f'results/{shown}'
+        key = 'pong_selected' if task == 'pong' and variant == 'plain' else f'{task}_{variant}'
+        stem = f'results/{key}'
         label = '(a)' if task == 'cartpole' else '(b)'
-        suffix = ' 1000-episode run.' if shown == 'pong_plain_1000' else ''
-        plots += [p(('3' if variant == 'plain' else '') + label + '.' + suffix, SMALL),
+        plots += [p(('3' if variant == 'plain' else '') + label + '.', SMALL),
                   pair(stem+'/training.png', stem+'/evaluation.png')]
-        keys = [key, shown] if key != shown else [key]
-        for item in keys:
-            ev = metrics[item]['evaluation']
-            name = 'CartPole-v1' if task == 'cartpole' else 'Pong-v5'
-            rows.append([f'{name} / {metrics[item]["config"]["episodes"]}',
-                         f'{ev["mean"]:.2f}', f'{ev["std_population"]:.2f}'])
+        ev = metrics[key]['evaluation']
+        name = 'CartPole-v1' if task == 'cartpole' else 'Pong-v5'
+        rows.append([f'{name} / {metrics[key]["config"]["episodes"]}',
+                     f'{ev["mean"]:.2f}', f'{ev["std_population"]:.2f}'])
     return plots + [table(rows)]
 
 
 def plain_page(metrics):
+    pong = metrics['pong_selected']
+    config, evaluation = pong['config'], pong['evaluation']
+    warm = config['warm_start']
+    train_count, eval_count = pong['training']['episodes'], evaluation['episodes']
+    wins = evaluation['wins']
     return [p('3. Part 1', HEAD),
-        p('I use PyTorch REINFORCE with one Adam update after each episode. The objective is '
-          'expected discounted episode reward. Actions are sampled from a two-output policy network.'),
-        Preformatted('G_t = sum_(k=t)^(T-1) gamma^(k-t) r_k\nLoss = -sum_t gamma^t log pi(a_t|s_t) G_t', CODE),
-        p('CartPole: 4 inputs, 32 tanh units, 2 outputs; gamma=0.95, learning rate=0.01, 800 episodes. '
-          'Pong: 6400 inputs, 32 ReLU units, 2 outputs; gamma=0.99, learning rate=0.001 '
-          '(a conservative stability choice). I first tried 250 episodes, then reran training '
-          'for 1000 total episodes with the same seed and settings. The first 250 episodes '
-          'matched the initial run.'),
-        p('For ALE/Pong-v5, only actions 2 and 3 are used. I apply the supplied 80x80 binary '
-          'preprocessing, then subtract the previous frame to provide motion information. '
-          'The first difference is zero. Frame skip is 4 and sticky-action probability is 0.25.'),
+        p('<b>3(a).</b> CartPole uses a 4-input network with 32 tanh units and 2 outputs. '
+          'I train for 800 episodes with Adam, learning rate 0.01 and gamma=0.95, '
+          'using one update per episode and discounted reward-to-go.'),
+        Preformatted('G_t = sum_(k=t)^(T-1) gamma^(k-t) r_k\nCartPole loss = -sum_t gamma^t log pi(a_t|s_t) G_t', CODE),
+        p('<b>3(b).</b> Pong uses 6400 inputs, 256 ReLU units and one Bernoulli logit for '
+          f'actions 2 and 3. I train for {train_count} episodes '
+          f'({warm["inherited_episodes"]} initial + {warm["additional_episodes"]} continued), '
+          'updating after every 4 games with Adam, learning rate 0.001 and gamma=0.99. '
+          'The smaller learning rate is used for stability. Warm-start training restores '
+          'the policy, Adam state and training RNG, but restarts the environment without '
+          'restoring ALE state. Frames use the supplied 80x80 binary preprocessing and consecutive-frame '
+          'differences; the first difference is zero. Frame skip is 4 and sticky-action probability is 0.25.'),
+        p('For Pong, I truncate reward-to-go at the next scoring point and omit the outer '
+          'time discount in the policy loss. This is a practical approximation to the full '
+          'discounted episodic objective. Entire games are still used for training scores and evaluation.'),
+        Preformatted('Pong loss = -(1/4) sum_games sum_t log pi(a_t|s_t) G_t(point)', CODE),
         *game_plots('plain', metrics),
-        p('Plots show total reward and a trailing 100-episode mean. Each model, including '
-          'both Pong attempts, is evaluated for 500 full episodes with a frozen, stochastic '
-          'policy. SD uses denominator 500. Training seed: 7; evaluation seeds: 20000-20499.', SMALL),
-        p('<b>Checks and edge cases:</b> 50 random-policy episodes give means 20.16 for CartPole '
-          'and -20.58 for Pong. The 1000-episode Pong run improves by only 0.12 points and still '
-          'loses all 500 evaluations. Termination and time-limit truncation end episodes; terminal '
-          'rewards are kept. Returns and frame history reset between episodes, not between Pong '
-          'points. No return normalization or reward shaping is used.'), PageBreak()]
+        p('Both training plots include the trailing 100-episode mean. Each final stochastic policy is '
+          f'evaluated for {eval_count} full games without updates; SD uses denominator {eval_count}. '
+          f'Pong averages {evaluation["mean"]:.2f} points and wins {wins}/{eval_count} games '
+          f'({100*wins/eval_count:.1f}%). CartPole uses training seed 7 and evaluation seeds '
+          f'20000-20499. Pong uses initial training seed {config["seed"]}, continuation environment '
+          f'seed {warm["train_env_seed"]} and evaluation seed {warm["evaluation_seed"]}.', SMALL),
+        p('<b>Checks and edge cases:</b> termination or truncation ends a rollout, and the final '
+          'reward is retained. Frame history resets each game. Pong returns reset at each score; '
+          f'zero-reward steps inherit the discounted next score. All {train_count} Pong training games and '
+          f'{eval_count} evaluations terminated normally, with no truncation and no evaluation parameter changes.', SMALL),
+        PageBreak()]
 
 
 def baseline_page(metrics):
     cp = metrics['cartpole_baseline']['gradient_variance']
     po = metrics['pong_baseline']['gradient_variance']
     return [p('Policy Gradient: Part 2', HEAD),
-        p('I repeat both experiments with an exponential moving average (EMA) baseline. '
-          'It starts at zero and stays fixed for the current episode. After the policy update, '
-          'b is replaced by 0.9b + 0.1 mean(G_t). Thus the baseline uses previous episodes '
-          'and does not depend on the current action. The baseline comparison uses the original '
-          'budgets: 800 CartPole and 250 Pong episodes, with the other settings unchanged.'),
+        p('I use an exponential moving average (EMA) baseline for both environments. It starts '
+          'at zero and stays fixed during an episode. After the policy update, '
+          'b is replaced by 0.9b + 0.1 mean(G_t), using previous episodes without depending '
+          'on the current action.'),
+        p('These baseline runs use 32 hidden units (tanh for CartPole, ReLU for Pong), '
+          'two policy outputs, full-episode reward-to-go and one update per episode. '
+          'CartPole uses 800 episodes, gamma=0.95 and learning rate 0.01; Pong uses 250 episodes, '
+          'gamma=0.99 and learning rate 0.001. Training seed is 7 and evaluation seeds are '
+          '20000-20499. These retain the original baseline setup; they are not a matched '
+          'comparison with the Part 1 Pong configuration.'),
         Preformatted('Loss = -sum_t gamma^t log pi(a_t|s_t) (G_t - b)', CODE),
         *game_plots('baseline', metrics),
-        p('The baseline raises CartPole mean reward from 176.82 to 294.39 in this run. '
-          'Pong stays near -20.5, so it is not solved. One seed and a short training budget '
-          'are not enough to conclude that one method is always better.'),
-        p('<b>Variance check:</b> for each final baseline-trained policy, I reuse its first '
-          '20 evaluation episodes and compute gradients with b=0 and with the final EMA. '
-          'The empirical covariance trace falls from '
+        p('Each policy is frozen for 500 evaluation episodes. The CartPole baseline policy '
+          'balances for 294.39 steps on average. The Pong baseline policy averages -20.53 '
+          'points and is not competitive.'),
+        p('<b>Variance check:</b> for each final baseline policy, I use the same 20 evaluation '
+          'trajectories to compute gradients with b=0 and with the final EMA. The empirical '
+          'covariance trace changes from '
           f'{cp["plain"]["variance_trace"]:.2f} to {cp["baseline"]["variance_trace"]:.2f} '
           'for CartPole and from '
           f'{po["plain"]["variance_trace"]:.2f} to {po["baseline"]["variance_trace"]:.2f} '
-          'for Pong. Lower gradient variance does not necessarily mean higher game scores.'),
-        p('<b>Edge cases:</b> the first episode uses b=0. The EMA is updated only after '
-          'the optimizer step, avoiding a baseline fitted to the current episode. '
-          'It works with zero or negative rewards without dividing by a reward standard deviation. '
+          'for Pong. This directly checks variance reduction on fixed trajectories.'),
+        p('<b>Edge cases:</b> the first episode uses b=0. Updating the EMA only after '
+          'the optimizer step avoids fitting the baseline to the current episode. '
+          'Zero and negative rewards do not require division by a reward standard deviation. '
           'A constant baseline is unbiased, but a poor choice can increase variance.'), PageBreak()]
-
-
-def larger_pong_page(metrics):
-    names = ['pong_plain_1000', 'pong_hidden200_plain_1000', 'pong_hidden200_value_1000']
-    labels = ['32 units, no baseline', '200 units, no baseline', '200 units, value baseline']
-    rows = [['Pong / 1000 training episodes', 'Eval mean', 'Eval SD']]
-    for name, label in zip(names, labels):
-        ev = metrics[name]['evaluation']
-        rows.append([label, f'{ev["mean"]:.2f}', f'{ev["std_population"]:.2f}'])
-    old, wide, value = [metrics[name]['evaluation']['mean'] for name in names]
-    variance = metrics[names[-1]]['gradient_variance']
-    outcome = ('Neither change improves on the original 32-unit run.'
-               if max(wide, value) <= old else 'The table shows the effects in this single seed.')
-    return [p('3(b) and Part 2. Additional Pong experiments', HEAD),
-        p('I increased the hidden layer from 32 to 200 ReLU units, then added a learned '
-          'state-value baseline. Both new runs use 1000 training episodes and 500 evaluation '
-          'episodes. The seed, learning rate (0.001), discount, preprocessing and one-update-per-episode '
-          'schedule are unchanged. The outer gamma^t factor is also retained.'),
-        p('The value network has 6400 inputs, 200 ReLU units and one output. Before each '
-          'policy update, I predict V(s_t) with the current value network and detach it. '
-          'After the policy update, I fit V to the Monte Carlo returns using mean squared '
-          'error and a separate Adam optimizer with learning rate 0.001.'),
-        Preformatted('Actor loss = -sum_t gamma^t log pi(a_t|s_t) (G_t - V(s_t))\nValue loss = mean_t (V(s_t) - G_t)^2', CODE),
-        p('200 units, no baseline.', SMALL),
-        pair('results/pong_hidden200_plain_1000/training.png',
-             'results/pong_hidden200_plain_1000/evaluation.png'),
-        p('200 units, learned value baseline.', SMALL),
-        pair('results/pong_hidden200_value_1000/training.png',
-             'results/pong_hidden200_value_1000/evaluation.png'),
-        table(rows),
-        p(f'Increasing the hidden layer changes the mean from {old:.2f} to {wide:.2f}; '
-          f'adding the value baseline gives {value:.2f}. {outcome} '
-          'One seed does not establish which method is better in general.', SMALL),
-        p('On the value-trained policy, the same-trajectory gradient check (20 evaluation '
-          f'episodes) gives variance traces {variance["plain"]["variance_trace"]:.2f} without '
-          f'a baseline and {variance["baseline"]["variance_trace"]:.2f} with V(s). '
-          'Both networks remain unchanged throughout evaluation.', SMALL),
-        Preformatted('python policy_gradient.py --task pong --hidden 200 --episodes 1000 \\\n  --learning-rate 0.001 --output results/pong_hidden200_plain_1000\npython policy_gradient.py --task pong --hidden 200 --value-baseline \\\n  --episodes 1000 --learning-rate 0.001 --value-learning-rate 0.001 \\\n  --output results/pong_hidden200_value_1000', CODE), PageBreak()]
 
 
 def final_page(args):
     github = ('Pending - add after upload.' if not args.github_url else
               f'{args.github_user} / {args.github_url.rstrip("/").split("/")[-1]} / {args.github_url}')
-    return [p('<b>2. Validation:</b> I also checked a small deterministic problem: capacity 3, '
-          'cap 8, arrivals 2, dispatch cost 5, holding cost 1, gamma=0.8 and horizon 4. '
-          'Enumerating all 16 action sequences from each of 9 states agrees with dynamic '
-          'programming to 3.55e-15. With no arrivals and n=0,...,15, the analytic cost '
-          'min(40n,100) matches the algorithm to 1.89e-9.'),
-        p('<b>Policy Gradient, Parts 1 and 2. Validation:</b> rewards [1,2,3] with gamma=0.5 give returns '
-          '[2.75,3.5,3], matching hand calculation. In a one-step bandit with P(a=1)=0.3 '
-          'and reward=a, exact enumeration gives gradient 0.21 with or without baseline 0.3. '
-          'Its variance falls from 0.1029 to 0.0336 (67.3%). This tests the baseline idea '
-          'independently of game performance. Evaluation leaves all model parameters unchanged.'),
-        p('<b>Reproduce:</b> use Python 3.12 and run the commands below from the repository root. '
-          'Create a virtual environment and install requirements.txt first.'),
-        Preformatted('python3.12 -m venv .venv\nsource .venv/bin/activate\npython -m pip install -r requirements.txt\npython shuttle.py\npython policy_gradient.py --task cartpole --episodes 800 \\\n  --learning-rate 0.01 --output results/cartpole_plain\npython policy_gradient.py --task cartpole --baseline --episodes 800 \\\n  --learning-rate 0.01 --output results/cartpole_baseline\npython policy_gradient.py --task pong --episodes 250 \\\n  --learning-rate 0.001 --output results/pong_plain\npython policy_gradient.py --task pong --episodes 1000 --learning-rate 0.001 \\\n  --output results/pong_plain_1000\npython policy_gradient.py --task pong --baseline --episodes 250 \\\n  --learning-rate 0.001 --output results/pong_baseline\npython policy_gradient.py --validate --output results/policy_validation.json\npython -m pytest -q\npython build_report.py', CODE),
-        p('shuttle.py runs the parameter checks and exhaustive comparison. The --validate '
-          'command runs the bandit, return and random-policy checks. Each training command '
-          'also runs 500 evaluations and the 20-episode gradient check. Raw scores, metrics, '
-          'first-10-step traces, models and plots are saved in results/.', SMALL),
-        p('<b>With three more months:</b> I would train Pong longer, repeat both methods '
-          'over several seeds, and compare the learned value baseline with EMA across both games. '
-          'I would test learning rates and episode batch sizes, measure gradient variance '
-          'with more samples, and check shuttle policies under different queue caps and '
-          'arrival distributions.'),
+    commands = [
+        'python3.12 -m venv .venv',
+        'source .venv/bin/activate',
+        'python -m pip install -r requirements.txt',
+        'python shuttle.py',
+        'python policy_gradient.py --task cartpole --episodes 800',
+        '  --learning-rate 0.01 --output results/cartpole_plain',
+        'python policy_gradient.py --task cartpole --baseline --episodes 800',
+        '  --learning-rate 0.01 --output results/cartpole_baseline',
+        'python pong_tuning.py --recipe ishan --episodes 3000 --seed 1',
+        '  --output results/pong_initial_rerun',
+        'python pong_continue.py --source results/pong_initial_rerun/policy.pt',
+        '  --additional-episodes 1000 --train-env-seed 70001 --eval-seed 54321',
+        '  --output results/pong_rerun',
+        'python policy_gradient.py --task pong --baseline --episodes 250',
+        '  --learning-rate 0.001 --output results/pong_baseline',
+        'python policy_gradient.py --validate --output results/policy_validation.json',
+        'python -m pytest -q',
+        'python build_report.py',
+    ]
+    commands = [line + (' ' + chr(92) if i+1 < len(commands) and commands[i+1].startswith('  ') else '')
+                for i, line in enumerate(commands)]
+    return [p('<b>2. Validation:</b> I checked a deterministic problem with capacity 3, cap 8, '
+          'arrivals 2, dispatch cost 5, holding cost 1, gamma=0.8 and horizon 4. Enumerating '
+          'all 16 action sequences from each of 9 states agrees with dynamic programming '
+          'to 3.55e-15. With no arrivals and n=0,...,15, the analytic cost min(40n,100) '
+          'matches the algorithm to 1.89e-9.'),
+        p('<b>Policy Gradient, Parts 1 and 2. Validation:</b> rewards [1,2,3] with gamma=0.5 '
+          'give full returns [2.75,3.5,3]. For Pong, rewards [0,1,0,-1] with gamma=0.5 give '
+          'point-truncated returns [0.5,1,-0.5,-1]. Both match hand calculation. In a one-step '
+          'bandit with P(a=1)=0.3 and reward=a, exact enumeration gives gradient 0.21 with '
+          'or without baseline 0.3. Its variance falls from 0.1029 to 0.0336 (67.3%). '
+          'This tests the estimator independently of game performance. All reported evaluations '
+          'leave model parameters unchanged.'),
+        p('<b>Reproduce:</b> use Python 3.12 and run these commands from the repository root. '
+          'The selected Pong model and scores are in results/pong_selected. The two Pong commands '
+          'reproduce the initial training and warm-start continuation; use fresh output paths. '
+          'The README also gives a shortcut using the supplied initial checkpoint. '
+          'build_report.py uses saved results and does not retrain.'),
+        Preformatted('\n'.join(commands), CODE),
+        p('shuttle.py runs the deterministic and exhaustive checks. The --validate command '
+          'checks full returns, the bandit and random policies. The tests also verify '
+          'point-truncated returns and the four-game update. Training commands save raw scores, '
+          'metrics, models and plots, followed by 500 frozen evaluations. The baseline runner '
+          'additionally saves the 20-trajectory variance check and first-10-step trace.', SMALL),
+        p('<b>With three more months:</b> I would repeat training over multiple seeds, test '
+          'longer Pong training, use identical configurations for baseline ablations, '
+          'measure gradient variance over more trajectories, and test shuttle policies '
+          'under different queue caps and arrival distributions.'),
+        p('<b>Pong configuration reference:</b> '
+          '<link href="https://github.com/ishan-monie/advanced-ml-hw1">'
+          'github.com/ishan-monie/advanced-ml-hw1</link>. The implementation and reported runs are local.', SMALL),
         p('<b>GitHub username, repository and link:</b> '+escape(github), SMALL)]
 
 
@@ -257,14 +262,12 @@ def main():
     parser.add_argument('--github-user', default='ZikunZheng1129')
     parser.add_argument('--github-url', default='https://github.com/ZikunZheng1129/mlds490-hw1')
     args = parser.parse_args()
-    names = ['cartpole_plain', 'cartpole_baseline', 'pong_plain', 'pong_baseline', 'pong_plain_1000',
-             'pong_hidden200_plain_1000', 'pong_hidden200_value_1000']
+    names = ['cartpole_plain', 'cartpole_baseline', 'pong_selected', 'pong_baseline']
     metrics = {name: load(f'results/{name}/metrics.json') for name in names}
     if any(m['evaluation']['episodes'] != 500 for m in metrics.values()):
         raise ValueError('Each experiment must contain 500 evaluation episodes.')
     plain_plots()
-    story = (shuttle_page() + plain_page(metrics) + baseline_page(metrics)
-             + larger_pong_page(metrics) + final_page(args))
+    story = shuttle_page() + plain_page(metrics) + baseline_page(metrics) + final_page(args)
     output = ROOT/'hw1_report.pdf'
     SimpleDocTemplate(str(output), pagesize=(612, 792), leftMargin=54, rightMargin=54,
                       topMargin=36, bottomMargin=36).build(story)

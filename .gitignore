@@ -8,3 +8,13 @@ work/
 .DS_Store
 mlds_assignment1.pdf
 tmp/
+
+# Local experiment archives
+results/pong_tuning/
+results/pong_continue_4000/
+results/pong_plain/
+results/pong_plain_1000/
+results/pong_hidden200_plain_1000/
+results/pong_hidden200_value_1000/
+results/*.log
+results/test_coverage.json
